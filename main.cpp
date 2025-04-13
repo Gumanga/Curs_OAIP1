@@ -7,19 +7,29 @@ struct Node {
     float temperature;
     Node* next;
 };
-enum Role { USER, ADMIN };
+enum Role { USER, ADMIN, EXIT };
 
 Role login() {
     int choice;
-    cout << "Выберите роль:\n";
-    cout << "1. Администратор\n";
-    cout << "2. Пользователь\n";
-    cout << "Ваш выбор: ";
-    cin >> choice;
 
-    if (choice == 1) return ADMIN;
-    else return USER;
+    while (true) {
+        cout << "\nВыберите роль:\n";
+        cout << "1. Администратор\n";
+        cout << "2. Пользователь\n";
+        cout << "3. Выйти из программы\n";
+        cout << "Ваш выбор: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1: return ADMIN;
+            case 2: return USER;
+            case 3: return EXIT;
+            default:
+                cout << "Неверный выбор. Попробуйте снова.\n";
+        }
+    }
 }
+
 class TemperatureList {
 private:
     Node* head;
@@ -30,6 +40,21 @@ public:
     ~TemperatureList() {
         clear();
     }
+
+void fillBelarusData(TemperatureList& list) {
+    list.addEntry("Минск", 14.2);
+    list.addEntry("Гродно", 13.8);
+    list.addEntry("Брест", 14.5);
+    list.addEntry("Гомель", 15.1);
+    list.addEntry("Могилёв", 14.7);
+    list.addEntry("Витебск", 13.2);
+    list.addEntry("Барановичи", 14.4);
+    list.addEntry("Полоцк", 13.5);
+    list.addEntry("Орша", 14.0);
+    list.addEntry("Лида", 13.9);
+
+    cout << "Данные по городам Беларуси успешно добавлены.\n";
+}
 
     // Добавить новую запись
     void addEntry(const string& location, float temp) {
@@ -150,18 +175,20 @@ public:
         head = nullptr;
     }
 };
-void adminMenu(TemperatureList& list) {
+bool adminMenu(TemperatureList& list) {
     int choice;
     string location;
     float temp;
 
-    do {
+    while (true) {
         cout << "\n--- Меню администратора ---\n";
         cout << "1. Добавить запись\n";
         cout << "2. Удалить запись\n";
         cout << "3. Редактировать запись\n";
         cout << "4. Показать список\n";
-        cout << "5. Выйти\n";
+        cout << "5. Автоматически заполнить города Беларуси\n";
+        cout << "6. Вернуться к выбору роли\n";
+        cout << "7. Завершить программу\n";
         cout << "Выбор: ";
         cin >> choice;
 
@@ -174,6 +201,7 @@ void adminMenu(TemperatureList& list) {
                 list.addEntry(location, temp);
                 break;
             case 2:
+                list.displayList();
                 cout << "Введите местность для удаления: ";
                 cin >> location;
                 list.removeEntry(location);
@@ -189,23 +217,29 @@ void adminMenu(TemperatureList& list) {
                 list.displayList();
                 break;
             case 5:
-                cout << "Выход.\n";
+                list.fillBelarusData(list);
                 break;
+            case 6:
+                return true;  // Вернуться к login()
+            case 7:
+                return false; // Завершить программу
             default:
                 cout << "Неверный выбор.\n";
         }
-
-    } while (choice != 5);
+    }
 }
 
-void userMenu(TemperatureList& list) {
+
+bool userMenu(TemperatureList& list) {
     int choice;
-    do {
+
+    while (true) {
         cout << "\n--- Меню пользователя ---\n";
         cout << "1. Показать список\n";
         cout << "2. Средняя температура\n";
         cout << "3. Макс/Мин температура\n";
-        cout << "4. Выйти\n";
+        cout << "4. Вернуться к выбору роли\n";
+        cout << "5. Завершить программу\n";
         cout << "Выбор: ";
         cin >> choice;
 
@@ -220,31 +254,30 @@ void userMenu(TemperatureList& list) {
                 list.maxMinTemperature();
                 break;
             case 4:
-                cout << "Выход.\n";
-                break;
+                return true;  // к login
+            case 5:
+                return false; // завершить main
             default:
                 cout << "Неверный выбор.\n";
         }
-
-    } while (choice != 4);
+    }
 }
+
 int main() {
     TemperatureList list;
 
     while (true) {
         Role role = login();
 
-        if (role == ADMIN)
-            adminMenu(list);
-        else
-            userMenu(list);
-
-        char again;
-        cout << "\nХотите вернуться к выбору роли? (y/n): ";
-        cin >> again;
-        if (again != 'y' && again != 'Y') {
-            cout << "Завершение программы.\n";
+        if (role == EXIT) {
+            cout << "Программа завершена.\n";
             break;
+        }
+
+        if (role == ADMIN) {
+            if (!adminMenu(list)) break;
+        } else {
+            if (!userMenu(list)) break;
         }
     }
 
