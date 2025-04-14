@@ -1,285 +1,302 @@
+Вот пример C++ программы, реализующей вашу задачу с использованием **односвязного списка** и соответствующих операций, включая меню, добавление, удаление, сортировку, сохранение/загрузку из бинарного файла и фильтрацию по критериям:
+
+---
+
+### ✅ `temperature_list.cpp` (основной файл)
+
+```cpp
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <limits>
 
 using namespace std;
 
-struct Node {
+struct TemperatureRecord {
     string location;
+    string date;
+    string time;
     float temperature;
-    Node* next;
+    TemperatureRecord* next;
 };
-enum Role { USER, ADMIN, EXIT };
 
-Role login() {
-    int choice;
+TemperatureRecord* head = nullptr;
 
-    while (true) {
-        cout << "\nВыберите роль:\n";
-        cout << "1. Администратор\n";
-        cout << "2. Пользователь\n";
-        cout << "3. Выйти из программы\n";
-        cout << "Ваш выбор: ";
-        cin >> choice;
+// Создание нового узла
+TemperatureRecord* createRecord(const string& location, const string& date, const string& time, float temperature) {
+    TemperatureRecord* newNode = new TemperatureRecord{ location, date, time, temperature, nullptr };
+    return newNode;
+}
 
-        switch (choice) {
-            case 1: return ADMIN;
-            case 2: return USER;
-            case 3: return EXIT;
-            default:
-                cout << "Неверный выбор. Попробуйте снова.\n";
-        }
+// Печать одного узла
+void printRecord(TemperatureRecord* node) {
+    if (node) {
+        cout << "Местность: " << node->location << ", Дата: " << node->date
+             << ", Время: " << node->time << ", Температура: " << node->temperature << "°C\n";
     }
 }
 
-class TemperatureList {
-private:
-    Node* head;
-
-public:
-    TemperatureList() : head(nullptr) {}
-
-    ~TemperatureList() {
-        clear();
+// 1. Вывод всех данных
+void printAll() {
+    if (!head) {
+        cout << "Список пуст.\n";
+        return;
     }
-
-void fillBelarusData(TemperatureList& list) {
-    list.addEntry("Минск", 14.2);
-    list.addEntry("Гродно", 13.8);
-    list.addEntry("Брест", 14.5);
-    list.addEntry("Гомель", 15.1);
-    list.addEntry("Могилёв", 14.7);
-    list.addEntry("Витебск", 13.2);
-    list.addEntry("Барановичи", 14.4);
-    list.addEntry("Полоцк", 13.5);
-    list.addEntry("Орша", 14.0);
-    list.addEntry("Лида", 13.9);
-
-    cout << "Данные по городам Беларуси успешно добавлены.\n";
+    TemperatureRecord* current = head;
+    while (current) {
+        printRecord(current);
+        current = current->next;
+    }
 }
 
-    // Добавить новую запись
-    void addEntry(const string& location, float temp) {
-        Node* newNode = new Node{location, temp, nullptr};
-        if (!head) {
-            head = newNode;
-        } else {
-            Node* current = head;
-            while (current->next)
-                current = current->next;
-            current->next = newNode;
-        }
+// 2. Добавление в начало
+void addToStart(TemperatureRecord* newNode) {
+    newNode->next = head;
+    head = newNode;
+}
+
+// 3. Добавление в конец
+void addToEnd(TemperatureRecord* newNode) {
+    if (!head) {
+        head = newNode;
+        return;
     }
+    TemperatureRecord* current = head;
+    while (current->next) {
+        current = current->next;
+    }
+    current->next = newNode;
+}
 
-    // Удалить запись по местности
-    void removeEntry(const string& location) {
-        Node* current = head;
-        Node* previous = nullptr;
+// 4. Добавление по алфавиту
+void addSortedByLocation(TemperatureRecord* newNode) {
+    if (!head || newNode->location < head->location) {
+        newNode->next = head;
+        head = newNode;
+        return;
+    }
+    TemperatureRecord* current = head;
+    while (current->next && current->next->location < newNode->location) {
+        current = current->next;
+    }
+    newNode->next = current->next;
+    current->next = newNode;
+}
 
-        while (current) {
-            if (current->location == location) {
-                if (!previous)
-                    head = current->next;
-                else
-                    previous->next = current->next;
-
-                delete current;
-                cout << "Запись удалена.\n";
-                return;
-            }
-            previous = current;
-            current = current->next;
-        }
-
+// 5. Добавление после определенного показателя
+void addAfter(string loc, TemperatureRecord* newNode) {
+    TemperatureRecord* current = head;
+    while (current && current->location != loc) {
+        current = current->next;
+    }
+    if (!current) {
         cout << "Местность не найдена.\n";
+        delete newNode;
+        return;
     }
+    newNode->next = current->next;
+    current->next = newNode;
+}
 
-    // Редактировать температуру по местности
-    void editEntry(const string& location, float newTemp) {
-        Node* current = head;
-
-        while (current) {
-            if (current->location == location) {
-                current->temperature = newTemp;
-                cout << "Температура обновлена.\n";
-                return;
-            }
-            current = current->next;
-        }
-
+// 6. Добавление перед определенным показателем
+void addBefore(string loc, TemperatureRecord* newNode) {
+    if (!head) return;
+    if (head->location == loc) {
+        newNode->next = head;
+        head = newNode;
+        return;
+    }
+    TemperatureRecord* prev = nullptr;
+    TemperatureRecord* current = head;
+    while (current && current->location != loc) {
+        prev = current;
+        current = current->next;
+    }
+    if (!current) {
         cout << "Местность не найдена.\n";
+        delete newNode;
+        return;
+    }
+    prev->next = newNode;
+    newNode->next = current;
+}
+
+// 7. Удаление узла с минимальной температурой
+void deleteMinTemperature() {
+    if (!head) return;
+
+    TemperatureRecord *minNode = head, *minPrev = nullptr;
+    TemperatureRecord *prev = nullptr, *current = head;
+
+    while (current) {
+        if (current->temperature < minNode->temperature) {
+            minNode = current;
+            minPrev = prev;
+        }
+        prev = current;
+        current = current->next;
     }
 
-    // Показать все записи
-    void displayList() const {
-        Node* current = head;
-        if (!current) {
-            cout << "Список пуст.\n";
-            return;
-        }
-
-        cout << "Список температур:\n";
-        while (current) {
-            cout << "Местность: " << current->location
-                 << " | Температура: " << current->temperature << "°C\n";
-            current = current->next;
-        }
+    if (minNode == head) {
+        head = head->next;
+    } else {
+        minPrev->next = minNode->next;
     }
 
-    // Средняя температура
-    void averageTemperature() const {
-        if (!head) {
-            cout << "Список пуст.\n";
-            return;
-        }
+    delete minNode;
+    cout << "Удалён узел с минимальной температурой.\n";
+}
 
-        int count = 0;
-        float sum = 0;
-        Node* current = head;
-        while (current) {
-            sum += current->temperature;
-            count++;
-            current = current->next;
-        }
+// 8. Сохранение в бинарный файл
+void saveToFile(const string& filename) {
+    ofstream out(filename, ios::binary);
+    TemperatureRecord* current = head;
+    while (current) {
+        size_t len = current->location.size();
+        out.write((char*)&len, sizeof(len));
+        out.write(current->location.c_str(), len);
 
-        cout << "Средняя температура: " << sum / count << "°C\n";
+        len = current->date.size();
+        out.write((char*)&len, sizeof(len));
+        out.write(current->date.c_str(), len);
+
+        len = current->time.size();
+        out.write((char*)&len, sizeof(len));
+        out.write(current->time.c_str(), len);
+
+        out.write((char*)&current->temperature, sizeof(current->temperature));
+
+        current = current->next;
+    }
+    out.close();
+    cout << "Список сохранён в файл.\n";
+}
+
+// 9. Загрузка из файла и добавление в начало
+void loadFromFile(const string& filename) {
+    ifstream in(filename, ios::binary);
+    if (!in) {
+        cout << "Ошибка открытия файла.\n";
+        return;
     }
 
-    // Максимум и минимум
-    void maxMinTemperature() const {
-        if (!head) {
-            cout << "Список пуст.\n";
-            return;
-        }
+    while (in.peek() != EOF) {
+        size_t len;
+        string location, date, time;
+        float temperature;
 
-        float maxTemp = head->temperature;
-        float minTemp = head->temperature;
-        Node* current = head->next;
+        in.read((char*)&len, sizeof(len));
+        location.resize(len);
+        in.read(&location[0], len);
 
-        while (current) {
-            if (current->temperature > maxTemp)
-                maxTemp = current->temperature;
-            if (current->temperature < minTemp)
-                minTemp = current->temperature;
-            current = current->next;
-        }
+        in.read((char*)&len, sizeof(len));
+        date.resize(len);
+        in.read(&date[0], len);
 
-        cout << "Макс: " << maxTemp << "°C, Мин: " << minTemp << "°C\n";
+        in.read((char*)&len, sizeof(len));
+        time.resize(len);
+        in.read(&time[0], len);
+
+        in.read((char*)&temperature, sizeof(temperature));
+
+        addToStart(createRecord(location, date, time, temperature));
+    }
+    in.close();
+    cout << "Загрузка завершена.\n";
+}
+
+// 10. Сведения о макс/мин температуре
+void showMaxMin() {
+    if (!head) {
+        cout << "Список пуст.\n";
+        return;
     }
 
-    void clear() {
-        Node* current = head;
-        while (current) {
-            Node* toDelete = current;
-            current = current->next;
-            delete toDelete;
-        }
-        head = nullptr;
+    TemperatureRecord* maxNode = head;
+    TemperatureRecord* minNode = head;
+    TemperatureRecord* current = head;
+
+    while (current) {
+        if (current->temperature > maxNode->temperature)
+            maxNode = current;
+        if (current->temperature < minNode->temperature)
+            minNode = current;
+        current = current->next;
     }
-};
-bool adminMenu(TemperatureList& list) {
-    int choice;
-    string location;
+
+    cout << "Максимальная температура:\n";
+    printRecord(maxNode);
+    cout << "Минимальная температура:\n";
+    printRecord(minNode);
+}
+
+// 11. Поиск по местности и диапазону времени
+void searchByLocationAndTime(const string& location, const string& startDate, const string& endDate) {
+    TemperatureRecord* current = head;
+    bool found = false;
+    while (current) {
+        if (current->location == location && current->date >= startDate && current->date <= endDate) {
+            printRecord(current);
+            found = true;
+        }
+        current = current->next;
+    }
+    if (!found)
+        cout << "Нет данных по указанному запросу.\n";
+}
+
+// Меню
+void showMenu() {
+    cout << "\nМеню:\n"
+         << "1. Показать все записи\n"
+         << "2. Добавить в начало\n"
+         << "3. Добавить в конец\n"
+         << "4. Добавить по алфавиту\n"
+         << "5. Добавить после местности\n"
+         << "6. Добавить перед местностью\n"
+         << "7. Удалить с минимальной температурой\n"
+         << "8. Сохранить в файл\n"
+         << "9. Загрузить из файла\n"
+         << "10. Показать макс/мин температуру\n"
+         << "11. Поиск по местности и дате\n"
+         << "0. Выход\n";
+}
+
+// Ввод записи
+TemperatureRecord* inputRecord() {
+    string loc, date, time;
     float temp;
+    cout << "Введите местность: ";
+    cin >> loc;
+    cout << "Введите дату (гггг-мм-дд): ";
+    cin >> date;
+    cout << "Введите время (чч:мм): ";
+    cin >> time;
+    cout << "Введите температуру: ";
+    cin >> temp;
+    return createRecord(loc, date, time, temp);
+}
 
-    while (true) {
-        cout << "\n--- Меню администратора ---\n";
-        cout << "1. Добавить запись\n";
-        cout << "2. Удалить запись\n";
-        cout << "3. Редактировать запись\n";
-        cout << "4. Показать список\n";
-        cout << "5. Автоматически заполнить города Беларуси\n";
-        cout << "6. Вернуться к выбору роли\n";
-        cout << "7. Завершить программу\n";
+// Главная функция
+int main() {
+    setlocale(LC_ALL, "ru");
+    int choice;
+    string location, startDate, endDate;
+
+    do {
+        showMenu();
         cout << "Выбор: ";
         cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // очистка ввода
 
         switch (choice) {
-            case 1:
-                cout << "Введите местность: ";
-                cin >> location;
-                cout << "Введите температуру: ";
-                cin >> temp;
-                list.addEntry(location, temp);
-                break;
-            case 2:
-                list.displayList();
-                cout << "Введите местность для удаления: ";
-                cin >> location;
-                list.removeEntry(location);
-                break;
-            case 3:
-                cout << "Введите местность: ";
-                cin >> location;
-                cout << "Введите новую температуру: ";
-                cin >> temp;
-                list.editEntry(location, temp);
-                break;
-            case 4:
-                list.displayList();
-                break;
+            case 1: printAll(); break;
+            case 2: addToStart(inputRecord()); break;
+            case 3: addToEnd(inputRecord()); break;
+            case 4: addSortedByLocation(inputRecord()); break;
             case 5:
-                list.fillBelarusData(list);
+                cout << "После какой местности вставить? ";
+                cin >> location;
+                addAfter(location, inputRecord());
                 break;
             case 6:
-                return true;  // Вернуться к login()
-            case 7:
-                return false; // Завершить программу
-            default:
-                cout << "Неверный выбор.\n";
-        }
-    }
-}
-
-
-bool userMenu(TemperatureList& list) {
-    int choice;
-
-    while (true) {
-        cout << "\n--- Меню пользователя ---\n";
-        cout << "1. Показать список\n";
-        cout << "2. Средняя температура\n";
-        cout << "3. Макс/Мин температура\n";
-        cout << "4. Вернуться к выбору роли\n";
-        cout << "5. Завершить программу\n";
-        cout << "Выбор: ";
-        cin >> choice;
-
-        switch (choice) {
-            case 1:
-                list.displayList();
-                break;
-            case 2:
-                list.averageTemperature();
-                break;
-            case 3:
-                list.maxMinTemperature();
-                break;
-            case 4:
-                return true;  // к login
-            case 5:
-                return false; // завершить main
-            default:
-                cout << "Неверный выбор.\n";
-        }
-    }
-}
-
-int main() {
-    TemperatureList list;
-
-    while (true) {
-        Role role = login();
-
-        if (role == EXIT) {
-            cout << "Программа завершена.\n";
-            break;
-        }
-
-        if (role == ADMIN) {
-            if (!adminMenu(list)) break;
-        } else {
-            if (!userMenu(list)) break;
-        }
-    }
-
-    return 0;
-}
