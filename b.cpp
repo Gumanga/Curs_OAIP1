@@ -16,7 +16,6 @@ struct TemperatureRecord {
 
 TemperatureRecord* head = nullptr;
 
-// Безопасный ввод целого числа
 int readIntSafe(const string& prompt) {
     int value;
     while (true) {
@@ -32,7 +31,6 @@ int readIntSafe(const string& prompt) {
     }
 }
 
-// Безопасный ввод числа с плавающей точкой
 float readFloatSafe(const string& prompt) {
     float value;
     while (true) {
@@ -48,7 +46,6 @@ float readFloatSafe(const string& prompt) {
     }
 }
 
-// Безопасный ввод непустой строки
 string readNonEmptyString(const string& prompt) {
     string input;
     while (true) {
@@ -59,7 +56,6 @@ string readNonEmptyString(const string& prompt) {
     }
 }
 
-// Проверка даты
 bool isValidDate(const string& date) {
     regex pattern(R"((\d{4})-(\d{2})-(\d{2}))");
     smatch match;
@@ -80,7 +76,6 @@ bool isValidDate(const string& date) {
     return true;
 }
 
-// Проверка времени
 bool isValidTime(const string& time) {
     regex pattern(R"(\d{2}:\d{2})");
     if (!regex_match(time, pattern)) {
@@ -94,9 +89,17 @@ TemperatureRecord* createRecord(const string& location, const string& date, cons
     return new TemperatureRecord{ location, date, time, temperature, nullptr };
 }
 
+void printRecord(TemperatureRecord* node) {
+    if (node) {
+        cout << "Местность: " << node->location
+             << ", Дата: " << node->date
+             << ", Время: " << node->time
+             << ", Температура: " << node->temperature << "°C\n";
+    }
+}
+
 TemperatureRecord* inputRecord() {
     string loc = readNonEmptyString("Введите местность: ");
-    
     string date;
     do {
         date = readNonEmptyString("Введите дату (гггг-мм-дд): ");
@@ -109,15 +112,6 @@ TemperatureRecord* inputRecord() {
 
     float temp = readFloatSafe("Введите температуру: ");
     return createRecord(loc, date, time, temp);
-}
-
-void printRecord(TemperatureRecord* node) {
-    if (node) {
-        cout << "Местность: " << node->location
-             << ", Дата: " << node->date
-             << ", Время: " << node->time
-             << ", Температура: " << node->temperature << "°C\n";
-    }
 }
 
 void printAll() {
@@ -373,42 +367,42 @@ int main() {
             case 2: addToStart(inputRecord()); break;
             case 3: addToEnd(inputRecord()); break;
             case 4: addSortedByLocation(inputRecord()); break;
+            // Вставь это вместо соответствующего блока switch-case в функции main:
 
-            case 5: {
-                location = readNonEmptyString("После какой местности вставить? ");
-                TemperatureRecord* current = head;
-                while (current && current->location != location) {
-                    current = current->next;
-                }
-                if (!current) {
-                    cout << "Местность не найдена. Возврат в меню.\n";
-                    break;
-                }
-                TemperatureRecord* newNode = inputRecord();
-                addAfter(location, newNode);
-                break;
-            }
+case 5: {
+    location = readNonEmptyString("После какой местности вставить? ");
+    TemperatureRecord* current = head;
+    while (current && current->location != location) {
+        current = current->next;
+    }
+    if (!current) {
+        cout << "Местность не найдена. Возврат в меню.\n";
+        break;
+    }
+    TemperatureRecord* newNode = inputRecord();
+    addAfter(location, newNode);
+    break;
+}
 
-            case 6: {
-                location = readNonEmptyString("Перед какой местности вставить? ");
-                TemperatureRecord* current = head;
-                while (current && current->location != location) {
-                    current = current->next;
-                }
-                if (!current) {
-                    cout << "Местность не найдена. Возврат в меню.\n";
-                    break;
-                }
-                TemperatureRecord* newNode = inputRecord();
-                addBefore(location, newNode);
-                break;
-            }
+case 6: {
+    location = readNonEmptyString("Перед какой местностью вставить? ");
+    TemperatureRecord* current = head;
+    while (current && current->location != location) {
+        current = current->next;
+    }
+    if (!current) {
+        cout << "Местность не найдена. Возврат в меню.\n";
+        break;
+    }
+    TemperatureRecord* newNode = inputRecord();
+    addBefore(location, newNode);
+    break;
+}
 
             case 7: deleteMinTemperature(); break;
             case 8: saveToFile("data.bin"); break;
             case 9: loadFromFile("data.bin"); break;
             case 10: showMaxMin(); break;
-
             case 11:
                 location = readNonEmptyString("Введите местность: ");
                 do {
@@ -419,7 +413,6 @@ int main() {
                 } while (!isValidDate(endDate));
                 searchByLocationAndTime(location, startDate, endDate);
                 break;
-
             case 0:
                 cout << "Выход.\n";
                 break;
@@ -427,10 +420,8 @@ int main() {
                 cout << "Неверный выбор!\n";
                 break;
         }
-
     } while (choice != 0);
 
-    // Очистка памяти
     while (head) {
         TemperatureRecord* temp = head;
         head = head->next;
