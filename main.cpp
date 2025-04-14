@@ -1,10 +1,3 @@
-Вот пример C++ программы, реализующей вашу задачу с использованием **односвязного списка** и соответствующих операций, включая меню, добавление, удаление, сортировку, сохранение/загрузку из бинарного файла и фильтрацию по критериям:
-
----
-
-### ✅ `temperature_list.cpp` (основной файл)
-
-```cpp
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -300,3 +293,27 @@ int main() {
                 addAfter(location, inputRecord());
                 break;
             case 6:
+                cout << "Перед какой местностью вставить? ";
+                cin >> location;
+                addBefore(location, inputRecord());
+                break;
+            case 7: deleteMinTemperature(); break;
+            case 8: saveToFile("data.bin"); break;
+            case 9: loadFromFile("data.bin"); break;
+            case 10: showMaxMin(); break;
+            case 11:
+                cout << "Введите местность: ";
+                cin >> location;
+                cout << "Введите начальную дату (гггг-мм-дд): ";
+                cin >> startDate;
+                cout << "Введите конечную дату (гггг-мм-дд): ";
+                cin >> endDate;
+                searchByLocationAndTime(location, startDate, endDate);
+                break;
+            case 0: cout << "Выход.\n"; break;
+            default: cout << "Неверный выбор!\n"; break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
