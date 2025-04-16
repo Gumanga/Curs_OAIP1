@@ -16,7 +16,6 @@ struct TemperatureRecord {
 
 TemperatureRecord* head = nullptr;
 
-// Безопасный ввод целого числа
 int readIntSafe(const string& prompt) {
     int value;
     while (true) {
@@ -32,7 +31,6 @@ int readIntSafe(const string& prompt) {
     }
 }
 
-// Безопасный ввод числа с плавающей точкой
 float readFloatSafe(const string& prompt) {
     float value;
     while (true) {
@@ -48,7 +46,6 @@ float readFloatSafe(const string& prompt) {
     }
 }
 
-// Безопасный ввод непустой строки
 string readNonEmptyString(const string& prompt) {
     string input;
     while (true) {
@@ -59,7 +56,6 @@ string readNonEmptyString(const string& prompt) {
     }
 }
 
-// Проверка даты
 bool isValidDate(const string& date) {
     regex pattern(R"((\d{4})-(\d{2})-(\d{2}))");
     smatch match;
@@ -69,18 +65,13 @@ bool isValidDate(const string& date) {
     }
     int month = stoi(match[2]);
     int day = stoi(match[3]);
-    if (month < 1 || month > 12) {
-        cout << "Месяц должен быть от 01 до 12.\n";
-        return false;
-    }
-    if (day < 1 || day > 31) {
-        cout << "День должен быть от 01 до 31.\n";
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+        cout << "Неверные значения дня или месяца.\n";
         return false;
     }
     return true;
 }
 
-// Проверка времени
 bool isValidTime(const string& time) {
     regex pattern(R"(\d{2}:\d{2})");
     if (!regex_match(time, pattern)) {
@@ -96,7 +87,6 @@ TemperatureRecord* createRecord(const string& location, const string& date, cons
 
 TemperatureRecord* inputRecord() {
     string loc = readNonEmptyString("Введите местность: ");
-    
     string date;
     do {
         date = readNonEmptyString("Введите дату (гггг-мм-дд): ");
@@ -252,7 +242,6 @@ void saveToFile(const string& filename) {
         out.write(current->time.c_str(), len);
 
         out.write((char*)&current->temperature, sizeof(current->temperature));
-
         current = current->next;
     }
     out.close();
@@ -262,7 +251,7 @@ void saveToFile(const string& filename) {
 void loadFromFile(const string& filename) {
     ifstream in(filename, ios::binary);
     if (!in) {
-        cout << "Ошибка открытия файла. Проверьте, существует ли файл '" << filename << "'\n";
+        cout << "Ошибка открытия файла.\n";
         return;
     }
 
@@ -301,6 +290,7 @@ void loadFromFile(const string& filename) {
             tail = newNode;
         }
     }
+
     in.close();
     cout << "Загрузка завершена.\n";
 }
@@ -343,6 +333,52 @@ void searchByLocationAndTime(const string& location, const string& startDate, co
         cout << "Нет данных по указанному запросу.\n";
 }
 
+// 📌 Вынесенная логика для case 5
+void handleAddAfter() {
+    string location = readNonEmptyString("После какой местности вставить? ");
+    TemperatureRecord* current = head;
+    while (current && current->location != location) {
+        current = current->next;
+    }
+    if (!current) {
+        cout << "Местность не найдена. Возврат в меню.\n";
+        return;
+    }
+    TemperatureRecord* newNode = inputRecord();
+    addAfter(location, newNode);
+}
+
+// 📌 Вынесенная логика для case 6
+void handleAddBefore() {
+    string location = readNonEmptyString("Перед какой местности вставить? ");
+    TemperatureRecord* current = head;
+    while (current && current->location != location) {
+        current = current->next;
+    }
+    if (!current) {
+        cout << "Местность не найдена. Возврат в меню.\n";
+        return;
+    }
+    TemperatureRecord* newNode = inputRecord();
+    addBefore(location, newNode);
+}
+
+// 📌 Вынесенная логика для case 11
+void searchByLocationAndDateRange() {
+    string location = readNonEmptyString("Введите местность: ");
+    string startDate, endDate;
+
+    do {
+        startDate = readNonEmptyString("Введите начальную дату (гггг-мм-дд): ");
+    } while (!isValidDate(startDate));
+
+    do {
+        endDate = readNonEmptyString("Введите конечную дату (гггг-мм-дд): ");
+    } while (!isValidDate(endDate));
+
+    searchByLocationAndTime(location, startDate, endDate);
+}
+
 void showMenu() {
     cout << "\nМеню:\n"
          << "1. Показать все записи\n"
@@ -362,7 +398,6 @@ void showMenu() {
 int main() {
     setlocale(LC_ALL, "ru");
     int choice;
-    string location, startDate, endDate;
 
     do {
         showMenu();
@@ -373,64 +408,19 @@ int main() {
             case 2: addToStart(inputRecord()); break;
             case 3: addToEnd(inputRecord()); break;
             case 4: addSortedByLocation(inputRecord()); break;
-
-            case 5: {
-                location = readNonEmptyString("После какой местности вставить? ");
-                TemperatureRecord* current = head;
-                while (current && current->location != location) {
-                    current = current->next;
-                }
-                if (!current) {
-                    cout << "Местность не найдена. Возврат в меню.\n";
-                    break;
-                }
-                TemperatureRecord* newNode = inputRecord();
-                addAfter(location, newNode);
-                break;
-            }
-
-            case 6: {
-                location = readNonEmptyString("Перед какой местности вставить? ");
-                TemperatureRecord* current = head;
-                while (current && current->location != location) {
-                    current = current->next;
-                }
-                if (!current) {
-                    cout << "Местность не найдена. Возврат в меню.\n";
-                    break;
-                }
-                TemperatureRecord* newNode = inputRecord();
-                addBefore(location, newNode);
-                break;
-            }
-
+            case 5: handleAddAfter(); break;
+            case 6: handleAddBefore(); break;
             case 7: deleteMinTemperature(); break;
             case 8: saveToFile("data.bin"); break;
             case 9: loadFromFile("data.bin"); break;
             case 10: showMaxMin(); break;
-
-            case 11:
-                location = readNonEmptyString("Введите местность: ");
-                do {
-                    startDate = readNonEmptyString("Введите начальную дату (гггг-мм-дд): ");
-                } while (!isValidDate(startDate));
-                do {
-                    endDate = readNonEmptyString("Введите конечную дату (гггг-мм-дд): ");
-                } while (!isValidDate(endDate));
-                searchByLocationAndTime(location, startDate, endDate);
-                break;
-
-            case 0:
-                cout << "Выход.\n";
-                break;
-            default:
-                cout << "Неверный выбор!\n";
-                break;
+            case 11: searchByLocationAndDateRange(); break;
+            case 0: cout << "Выход.\n"; break;
+            default: cout << "Неверный выбор!\n"; break;
         }
 
     } while (choice != 0);
 
-    // Очистка памяти
     while (head) {
         TemperatureRecord* temp = head;
         head = head->next;
