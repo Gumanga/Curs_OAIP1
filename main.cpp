@@ -3,6 +3,7 @@
 #include <fstream>
 #include <limits>
 #include <regex>
+#include <windows.h>
 
 using namespace std;
 
@@ -396,7 +397,8 @@ void showMenu() {
 }
 
 int main() {
-    setlocale(LC_ALL, "ru");
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
     int choice;
 
     do {
