@@ -334,7 +334,6 @@ void searchByLocationAndTime(const string& location, const string& startDate, co
         cout << "Нет данных по указанному запросу.\n";
 }
 
-// 📌 Вынесенная логика для case 5
 void handleAddAfter() {
     string location = readNonEmptyString("После какой местности вставить? ");
     TemperatureRecord* current = head;
@@ -349,7 +348,6 @@ void handleAddAfter() {
     addAfter(location, newNode);
 }
 
-// 📌 Вынесенная логика для case 6
 void handleAddBefore() {
     string location = readNonEmptyString("Перед какой местности вставить? ");
     TemperatureRecord* current = head;
@@ -364,7 +362,6 @@ void handleAddBefore() {
     addBefore(location, newNode);
 }
 
-// 📌 Вынесенная логика для case 11
 void searchByLocationAndDateRange() {
     string location = readNonEmptyString("Введите местность: ");
     string startDate, endDate;
